@@ -2,10 +2,14 @@ import Config
 
 # NOTE: this file contains some security keys/certs that are *not* secrets, and are only used for local development purposes.
 
-host = "hubs.local"
-cors_proxy_host = "hubs-proxy.local"
-assets_host = "hubs-assets.local"
-link_host = "hubs-link.local"
+host = System.get_env("HUBS_HOST") || "hubs.local"
+
+{cors_proxy_host, assets_host, link_host} =
+  if host == "hubs.local" do
+    {"hubs-proxy.local", "hubs-assets.local", "hubs-link.local"}
+  else
+    {"", host, host}
+  end
 
 # To run reticulum across a LAN for local testing, uncomment and change the line below to the LAN IP
 # host = cors_proxy_host = "192.168.1.27"
@@ -23,8 +27,11 @@ config :ret, RetWeb.Endpoint,
     port: 4000,
     otp_app: :ret,
     cipher_suite: :strong,
-    keyfile: "#{File.cwd!()}/priv/dev-ssl.key",
-    certfile: "#{File.cwd!()}/priv/dev-ssl.cert"
+    #keyfile: "#{File.cwd!()}/priv/dev-ssl.key",
+    #certfile: "#{File.cwd!()}/priv/dev-ssl.cert"
+    keyfile: "priv/cert/key.pem",
+    certfile: "priv/cert/cert.pem",
+
   ],
   cors_proxy_url: [scheme: "https", host: cors_proxy_host, port: 4000],
   assets_url: [scheme: "https", host: assets_host, port: 4000],
