@@ -100,7 +100,10 @@ defmodule RetWeb.Plugs.AddCSP do
     link_url = config_url(:link_url)
     # legacy
     thumbnail_url =
-      config_url(:thumbnail_url) || cors_proxy_url |> String.replace("cors-proxy", "nearspark")
+      case config_url(:thumbnail_url) || cors_proxy_url do
+        nil -> nil
+        url -> String.replace(url, "cors-proxy", "nearspark")
+      end
 
     # TODO: The https janus port CSP rules (including the default) can be removed after dialog is deployed,
     # since they are used to snoop and see what SFU it is.
