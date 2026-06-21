@@ -16,10 +16,15 @@ case config_env() do
       |> System.get_env("443")
       |> String.to_integer()
 
+    perms_key_path = System.get_env("PERMS_KEY_PATH")
     perms_key =
-      "PERMS_KEY"
-      |> System.get_env("")
-      |> String.replace("\\n", "\n")
+      if perms_key_path && File.exists?(perms_key_path) do
+        perms_key_path |> File.read!()
+      else
+        "PERMS_KEY"
+        |> System.get_env("")
+        |> String.replace("\\n", "\n")
+      end
 
     config :ret, Ret.JanusLoadStatus, default_janus_host: dialog_hostname, janus_port: dialog_port
 
@@ -41,6 +46,22 @@ case config_env() do
     config :ret, Ret.Repo, hostname: db_hostname
 
     config :ret, Ret.SessionLockRepo, hostname: db_hostname
+
+    # SMTP Mailer configuration for Mailcow Postfix
+    config :ret, Ret.Mailer,
+      adapter: Bamboo.SMTPAdapter,
+      server: System.get_env("SMTP_SERVER", "mail.tobias-weiss.org"),
+      port: String.to_integer(System.get_env("SMTP_PORT", "587")),
+      username: System.get_env("SMTP_USERNAME", ""),
+      password: System.get_env("SMTP_PASSWORD", ""),
+      tls: :always,
+      ssl: false,
+      auth: :always,
+      allowed_tls_versions: [:"tlsv1.2"],
+      no_mx_lookups: true,
+      retries: 3
+
+    config :ret, RetWeb.Email, from: System.get_env("EMAIL_FROM", "hubs@tobias-weiss.org")
 
   :test ->
     db_credentials = System.get_env("DB_CREDENTIALS", "admin")

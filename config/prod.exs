@@ -124,11 +124,23 @@ config :ret, Ret.Scheduler,
 
 config :ret, RetWeb.Plugs.HeaderAuthorization, header_name: "x-ret-admin-access-key"
 
+# SMTP Mailer configuration for Mailcow Postfix
+smtp_server = System.get_env("SMTP_SERVER", "mail.tobias-weiss.org")
+smtp_port = String.to_integer(System.get_env("SMTP_PORT", "587"))
+smtp_username = System.get_env("SMTP_USERNAME", "")
+smtp_password = System.get_env("SMTP_PASSWORD", "")
+
 config :ret, Ret.Mailer,
   adapter: Bamboo.SMTPAdapter,
-  tls: :always,
+  server: smtp_server,
+  port: smtp_port,
+  username: smtp_username,
+  password: smtp_password,
+  tls: :if_available,
   ssl: false,
-  retries: 3
+  retries: 3,
+
+config :ret, RetWeb.Email, from: System.get_env("EMAIL_FROM", "hubs@tobias-weiss.org")
 
 config :ret, Ret.Guardian, issuer: "ret", ttl: {12, :weeks}, allowed_drift: 60 * 1000
 

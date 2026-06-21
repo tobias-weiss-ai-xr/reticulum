@@ -41,9 +41,42 @@ defmodule Ret.Api.Rooms do
 
   def authed_create_room(%Credentials{} = credentials, params) do
     if can?(credentials, create_room(nil)) do
-      Hub.create_room(params, credentials.account)
+      with {:ok, params} <- validate_chemistry_in_params(params),
+           {:ok, hub} <- Hub.create_room(params, credentials.account) do
+        {:ok, hub}
+      else
+        {:error, reason} -> {:error, reason}
+        error -> error
+      end
     else
       {:error, :invalid_credentials}
+    end
+  end
+
+  def authed_get_element_rooms(%Credentials{} = credentials, element_symbol, params) do
+    if can?(credentials, get_public_rooms(nil)) do
+      {:ok, Hub.get_element_rooms(element_symbol, params)}
+    else
+      {:error, :invalid_credentials}
+    end
+  end
+
+  defp validate_chemistry_in_params(params) do
+    case params do
+      %{user_data: %{"chemistry" => chemistry}} when is_map(chemistry) ->
+        case Ret.Chemistry.validate_chemistry_data(chemistry) do
+          :ok -> {:ok, params}
+          {:error, reason} -> {:error, reason}
+        end
+
+      %{user_data: %{chemistry: chemistry}} when is_map(chemistry) ->
+        case Ret.Chemistry.validate_chemistry_data(chemistry) do
+          :ok -> {:ok, params}
+          {:error, reason} -> {:error, reason}
+        end
+
+      _ ->
+        {:ok, params}
     end
   end
 
@@ -55,7 +88,9 @@ defmodule Ret.Api.Rooms do
       {:error, "Cannot find room with id: " <> hub_sid}
     else
       if can?(credentials, update_room(hub)) do
-        update_room(hub, credentials, params)
+        with {:ok, params} <- validate_chemistry_in_params(params) do
+          update_room(hub, credentials, params)
+        end
       else
         {:error, :invalid_credentials}
       end

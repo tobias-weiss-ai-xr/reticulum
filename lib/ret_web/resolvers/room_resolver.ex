@@ -146,4 +146,40 @@ defmodule RetWeb.Resolvers.RoomResolver do
   def update_room(_parent, _args, _resolutions) do
     resolver_error(:unauthorized, "Unauthorized access")
   end
+
+  def chemistry(%Hub{} = hub, _args, _resolutions) do
+    chemistry_data =
+      case hub.user_data do
+        %{"chemistry" => chemistry} when is_map(chemistry) ->
+          %{
+            symbol: Map.get(chemistry, "symbol"),
+            theme: Map.get(chemistry, "theme"),
+            experiments: Map.get(chemistry, "experiments")
+          }
+
+        %{chemistry: chemistry} when is_map(chemistry) ->
+          %{
+            symbol: Map.get(chemistry, :symbol) || Map.get(chemistry, "symbol"),
+            theme: Map.get(chemistry, :theme) || Map.get(chemistry, "theme"),
+            experiments: Map.get(chemistry, :experiments) || Map.get(chemistry, "experiments")
+          }
+
+        _ ->
+          nil
+      end
+
+    {:ok, chemistry_data}
+  end
+
+  def element_rooms(_parent, %{symbol: symbol} = args, %{
+        context: %{
+          credentials: %Credentials{} = credentials
+        }
+      }) do
+    Ret.Api.Rooms.authed_get_element_rooms(credentials, symbol, args)
+  end
+
+  def element_rooms(_parent, _args, _resolutions) do
+    resolver_error(:unauthorized, "Unauthorized access")
+  end
 end

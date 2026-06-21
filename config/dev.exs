@@ -8,7 +8,7 @@ host = System.get_env("HUBS_HOST") || "hubs.local"
   if host == "hubs.local" do
     {"hubs-proxy.local", "hubs-assets.local", "hubs-link.local"}
   else
-    {"", host, host}
+    {"cors-proxy.#{host}", "assets.#{host}", "link.#{host}"}
   end
 
 # To run reticulum across a LAN for local testing, uncomment and change the line below to the LAN IP
@@ -21,8 +21,8 @@ host = System.get_env("HUBS_HOST") || "hubs.local"
 # watchers to your application. For example, we use it
 # with brunch.io to recompile .js and .css sources.
 config :ret, RetWeb.Endpoint,
-  url: [scheme: "https", host: host, port: 4000],
-  static_url: [scheme: "https", host: host, port: 4000],
+  url: [scheme: "https", host: host, port: 443],
+  static_url: [scheme: "https", host: host, port: 443],
   https: [
     port: 4000,
     otp_app: :ret,
@@ -33,9 +33,9 @@ config :ret, RetWeb.Endpoint,
     certfile: "priv/cert/cert.pem",
 
   ],
-  cors_proxy_url: [scheme: "https", host: cors_proxy_host, port: 4000],
-  assets_url: [scheme: "https", host: assets_host, port: 4000],
-  link_url: [scheme: "https", host: link_host, port: 4000],
+  cors_proxy_url: [scheme: "https", host: cors_proxy_host, port: 443],
+  assets_url: [scheme: "https", host: assets_host, port: 443],
+  link_url: [scheme: "https", host: link_host, port: 443],
   imgproxy_url: [scheme: "http", host: host, port: 5000],
   debug_errors: true,
   code_reloader: true,
@@ -158,19 +158,41 @@ websocket_hosts =
     "https://#{host}:4000 https://#{host}:8080 wss://#{host}:4000 wss://#{host}:8080 wss://#{host}:8989 wss://#{host}:9090 " <>
     "wss://#{host}:4000 wss://#{host}:8080 https://#{host}:8080 https://hubs.local:8080 wss://hubs.local:8080"
 
+pse_origin = "https://pse.chemie-lernen.org"
+
 config :ret, RetWeb.Plugs.AddCSP,
   script_src: asset_hosts,
   font_src: asset_hosts,
   style_src: asset_hosts,
   connect_src:
-    "https://#{host}:8080 https://sentry.prod.mozaws.net #{asset_hosts} #{websocket_hosts} https://www.mozilla.org",
-  img_src: asset_hosts,
-  media_src: asset_hosts,
-  manifest_src: asset_hosts
+    "https://#{host}:8080 https://sentry.prod.mozaws.net #{asset_hosts} #{websocket_hosts} https://www.mozilla.org #{pse_origin}",
+  img_src: "#{asset_hosts} #{pse_origin}",
+  media_src: "#{asset_hosts} #{pse_origin}",
+  manifest_src: asset_hosts,
+  frame_src: "#{pse_origin}",
+  child_src: "#{pse_origin}",
+  worker_src: "#{pse_origin}"
 
-config :ret, Ret.Mailer, adapter: Bamboo.LocalAdapter
+# SMTP Mailer configuration for Mailcow Postfix
+smtp_server = System.get_env("SMTP_SERVER", "mail.tobias-weiss.org")
+smtp_port = String.to_integer(System.get_env("SMTP_PORT", "587"))
+smtp_username = System.get_env("SMTP_USERNAME", "")
+smtp_password = System.get_env("SMTP_PASSWORD", "")
 
-config :ret, RetWeb.Email, from: "info@hubs-mail.com"
+config :ret, Ret.Mailer,
+  adapter: Bamboo.SMTPAdapter,
+  server: smtp_server,
+  port: smtp_port,
+  username: smtp_username,
+  password: smtp_password,
+  tls: :always,
+  ssl: false,
+  auth: :always,
+  allowed_tls_versions: [:"tlsv1.2"],
+  no_mx_lookups: true,
+  retries: 3
+
+config :ret, RetWeb.Email, from: System.get_env("EMAIL_FROM", "hubs@tobias-weiss.org")
 
 config :ret, Ret.OAuthToken, oauth_token_key: ""
 
@@ -209,6 +231,13 @@ config :ret, Ret.HttpUtils, insecure_ssl: true
 config :ret, Ret.Meta, phx_host: host
 
 config :ret, Ret.Locking, lock_timeout_ms: 1000 * 60 * 15
+
+# Dialog certificate paths (single source of truth for service auth)
+# The Dockerfile copies these certs at build time to the container paths below.
+config :ret, :dialog,
+  auth_key_path: "/etc/perms.pub.pem",
+  cert_fullchain_path: "/etc/ssl/fullchain.pem",
+  cert_privkey_path: "/etc/ssl/privkey.pem"
 
 config :ret, Ret.Repo.Migrations.AdminSchemaInit, postgrest_password: "password"
 config :ret, Ret.StatsJob, node_stats_enabled: false, node_gauges_enabled: false

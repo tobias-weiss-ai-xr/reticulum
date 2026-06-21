@@ -42,3 +42,8 @@ log
 
 #VS Code
 .vscode
+erl_crash.dump
+JOSE.JWK.from_pem
+config/*.backup_*
+config/*_bak
+certs/

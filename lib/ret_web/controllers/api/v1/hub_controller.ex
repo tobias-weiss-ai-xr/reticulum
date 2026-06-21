@@ -12,8 +12,17 @@ defmodule RetWeb.Api.V1.HubController do
   plug RetWeb.Plugs.HeaderAuthorization when action in [:delete]
 
   def create(conn, %{"hub" => _hub_params} = params) do
-    Hub.create_new_room(params["hub"], false)
-    |> exec_create(conn)
+    hub_params = params["hub"]
+    chemistry = get_in(hub_params, ["user_data", "chemistry"])
+
+    case Ret.Chemistry.validate_chemistry_data(chemistry) do
+      :ok ->
+        Hub.create_new_room(hub_params, false)
+        |> exec_create(conn)
+
+      {:error, reason} ->
+        conn |> send_resp(400, reason)
+    end
   end
 
   defp exec_create(hub_changeset, conn) do
@@ -53,13 +62,21 @@ defmodule RetWeb.Api.V1.HubController do
   end
 
   defp update_with_hub(conn, account, hub, hub_params) do
-    if is_nil(hub_params["scene_id"]) do
-      update_with_hub_and_scene(conn, account, hub, nil, hub_params)
-    else
-      case Scene.scene_or_scene_listing_by_sid(hub_params["scene_id"]) do
-        nil -> conn |> send_resp(422, "scene not found")
-        scene -> update_with_hub_and_scene(conn, account, hub, scene, hub_params)
-      end
+    chemistry = get_in(hub_params, ["user_data", "chemistry"])
+
+    case Ret.Chemistry.validate_chemistry_data(chemistry) do
+      :ok ->
+        if is_nil(hub_params["scene_id"]) do
+          update_with_hub_and_scene(conn, account, hub, nil, hub_params)
+        else
+          case Scene.scene_or_scene_listing_by_sid(hub_params["scene_id"]) do
+            nil -> conn |> send_resp(422, "scene not found")
+            scene -> update_with_hub_and_scene(conn, account, hub, scene, hub_params)
+          end
+        end
+
+      {:error, reason} ->
+        conn |> send_resp(400, reason)
     end
   end
 
@@ -88,5 +105,14 @@ defmodule RetWeb.Api.V1.HubController do
     |> Repo.update!()
 
     conn |> send_resp(200, "OK")
+  end
+
+  def index_by_element(conn, %{"element_symbol" => element_symbol}) do
+    page = conn.params |> Map.get("page", "1") |> String.to_integer()
+    page_size = conn.params |> Map.get("page_size", "100") |> String.to_integer()
+
+    page_result = Hub.get_element_rooms(element_symbol, %{page: page, page_size: page_size})
+
+    render(conn, "index.json", hubs: page_result.entries, page_result: page_result)
   end
 end

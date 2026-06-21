@@ -39,7 +39,12 @@ defmodule Ret.Application do
           Ret.DelayStopSignalHandler.delay_stop()
 
           try do
-            Ecto.Migrator.run(Ret.SessionLockRepo, priv_path, :up, all: true, prefix: "ret0")
+            case Ecto.Migrator.migrations(Ret.SessionLockRepo, prefix: "ret0") do
+              [] ->
+                Ecto.Migrator.run(Ret.SessionLockRepo, priv_path, :up, all: true, prefix: "ret0")
+              [_ | _] ->
+                :ok
+            end
           after
             Ret.DelayStopSignalHandler.allow_stop()
           end

@@ -67,6 +67,10 @@ defmodule RetWeb.Router do
     plug RetWeb.Plugs.ForbidDisabledAccounts
   end
 
+  pipeline :room_access do
+    plug RetWeb.Plugs.RoomAccess
+  end
+
   pipeline :admin_required do
     plug RetWeb.Guardian.AuthPipeline
     plug RetWeb.Plugs.AdminOnly
@@ -153,15 +157,23 @@ defmodule RetWeb.Router do
     scope "/v1", as: :api_v1 do
       pipe_through [:auth_optional]
 
+      get "/hubs/element/:element_symbol", Api.V1.HubController, :index_by_element
+
       resources "/media/search", Api.V1.MediaSearchController, only: [:index]
       resources "/avatars", Api.V1.AvatarController, only: [:show]
       resources "/scenes", Api.V1.SceneController, only: [:show]
     end
 
     scope "/v1", as: :api_v1 do
+      pipe_through [:auth_required, :room_access]
+    end
+
+    scope "/v1", as: :api_v1 do
       pipe_through [:auth_required]
 
       resources "/scenes", Api.V1.SceneController, only: [:create, :update]
+      post "/rooms/token", Api.V1.RoomAccessController, :create
+
       resources "/avatars", Api.V1.AvatarController, only: [:create, :update, :delete]
       resources "/hubs", Api.V1.HubController, only: [:update]
       resources "/assets", Api.V1.AssetsController, only: [:create, :delete]

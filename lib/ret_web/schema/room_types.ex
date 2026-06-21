@@ -141,6 +141,21 @@ defmodule RetWeb.Schema.RoomTypes do
 
     @desc "Arbitrary json data associated with the room"
     field :user_data, :json
+
+    @desc "Chemistry element data extracted from user_data"
+    field :chemistry, :chemistry_data do
+      resolve &Resolvers.RoomResolver.chemistry/3
+    end
+  end
+
+  @desc "Chemistry element data for a room"
+  object :chemistry_data do
+    @desc "Element symbol (e.g. H, He, Fe)"
+    field :symbol, :string
+    @desc "Visual theme name for this element's room"
+    field :theme, :string
+    @desc "List of experiment identifiers available in this room"
+    field :experiments, list_of(:string)
   end
 
   @desc """
@@ -194,6 +209,19 @@ defmodule RetWeb.Schema.RoomTypes do
       @desc "The number of entries per page"
       arg :page_size, :integer
       resolve &Resolvers.RoomResolver.favorite_rooms/3
+    end
+
+    @desc """
+    Returns a list of rooms for a given chemistry element symbol.
+    """
+    field :element_rooms, :room_list do
+      @desc "The element symbol to filter by (e.g. H, He, Fe)"
+      arg :symbol, non_null(:string)
+      @desc "The desired page of data to return"
+      arg :page, :integer
+      @desc "The number of entries per page"
+      arg :page_size, :integer
+      resolve &Resolvers.RoomResolver.element_rooms/3
     end
   end
 

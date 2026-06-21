@@ -2,6 +2,39 @@ defmodule RetWeb.Api.V1.HubView do
   use RetWeb, :view
   alias Ret.{Hub, Scene, SceneListing}
 
+  def render("index.json", %{hubs: hubs, page_result: page}) do
+    %{
+      hubs: Enum.map(hubs, fn hub ->
+        %{
+          hub_id: hub.hub_sid,
+          name: hub.name,
+          description: hub.description,
+          user_data: hub.user_data,
+          slug: hub.slug,
+          allow_promotion: hub.allow_promotion,
+          entry_mode: hub.entry_mode,
+          scene:
+            if hub.scene || hub.scene_listing do
+              RetWeb.Api.V1.SceneView.render_scene(hub.scene || hub.scene_listing, nil)
+            else
+              nil
+            end,
+          member_permissions: hub |> Hub.member_permissions_for_hub(),
+          room_size: hub |> Hub.room_size_for(),
+          member_count: hub |> Hub.member_count_for(),
+          lobby_count: hub |> Hub.lobby_count_for(),
+          pse_url: pse_url(hub)
+        }
+      end),
+      pagination: %{
+        page: page.page_number,
+        page_size: page.page_size,
+        total_pages: page.total_pages,
+        total_entries: page.total_entries
+      }
+    }
+  end
+
   def render("create.json", %{hub: hub}) do
     %{
       status: :ok,
@@ -54,7 +87,8 @@ defmodule RetWeb.Api.V1.HubView do
           member_permissions: hub |> Hub.member_permissions_for_hub(),
           room_size: hub |> Hub.room_size_for(),
           member_count: hub |> Hub.member_count_for(),
-          lobby_count: hub |> Hub.lobby_count_for()
+          lobby_count: hub |> Hub.lobby_count_for(),
+          pse_url: pse_url(hub)
         }
       ]
     }
@@ -87,9 +121,22 @@ defmodule RetWeb.Api.V1.HubView do
           member_permissions: hub |> Hub.member_permissions_for_hub(),
           room_size: hub |> Hub.room_size_for(),
           member_count: hub |> Hub.member_count_for(),
-          lobby_count: hub |> Hub.lobby_count_for()
+          lobby_count: hub |> Hub.lobby_count_for(),
+          pse_url: pse_url(hub)
         }
       ]
     }
   end
+
+  defp pse_url(%{user_data: user_data}) when is_map(user_data) do
+    case user_data do
+      %{"chemistry" => %{"symbol" => symbol}} when is_binary(symbol) and symbol != "" ->
+        "https://pse.chemie-lernen.org?element=#{symbol}"
+
+      _ ->
+        nil
+    end
+  end
+
+  defp pse_url(_), do: nil
 end

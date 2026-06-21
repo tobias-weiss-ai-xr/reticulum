@@ -392,6 +392,21 @@ defmodule Ret.Hub do
     Repo.paginate(query, params)
   end
 
+  def get_element_rooms(element_symbol, params) do
+    query =
+      from h in Hub,
+        where:
+          fragment(
+            "user_data->'chemistry'->>'symbol' = ?",
+            ^element_symbol
+          ),
+        where: h.entry_mode in [^:allow, ^:invite],
+        order_by: [desc: :inserted_at],
+        preload: ^Hub.hub_preloads()
+
+    Repo.paginate(query, params)
+  end
+
   def changeset(%Hub{} = hub, %Scene{} = scene, attrs) do
     hub
     |> changeset(nil, attrs)
