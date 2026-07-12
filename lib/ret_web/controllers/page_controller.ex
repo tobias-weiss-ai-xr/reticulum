@@ -246,6 +246,8 @@ defmodule RetWeb.PageController do
 
   def render_for_path("/stream-offline.png", _params, conn), do: conn |> render_static_asset()
   def render_for_path("/quota-error.png", _params, conn), do: conn |> render_static_asset()
+  def render_for_path("/logo.png", _params, conn), do: conn |> render_static_asset()
+  def render_for_path("/avatar_unavailable.png", _params, conn), do: conn |> render_static_asset()
 
   def render_for_path("/hubs/schema.toml", _params, conn), do: conn |> render_asset("schema.toml")
 
@@ -311,6 +313,11 @@ defmodule RetWeb.PageController do
 
     conn
     |> send_resp(200, robots_txt)
+  end
+
+  def render_for_path("/hub/" <> path, params, conn) do
+    # Strip /hub/ prefix and route normally as /:hub_sid/:slug
+    render_for_path("/" <> path, params, conn)
   end
 
   def render_for_path("/" <> path, params, conn) do
@@ -430,7 +437,7 @@ defmodule RetWeb.PageController do
   def render_hub_content(conn, nil, _) do
     user_agent =
       get_req_header(conn, "user-agent")
-      |> Enum.at(0)
+      |> Enum.at(0, "")
 
     if String.contains?(user_agent, "kube-probe") do
       send_resp(conn, 200, "")
@@ -670,7 +677,7 @@ defmodule RetWeb.PageController do
     do: cors_proxy(conn, "#{url}?#{qs}")
 
   defp cors_proxy(conn, url) do
-    %URI{authority: authority, host: host} = uri = URI.parse(url)
+    %URI{authority: authority, host: host} = URI.parse(url)
 
     resolved_ip = HttpUtils.resolve_ip(host)
 
@@ -679,8 +686,6 @@ defmodule RetWeb.PageController do
     else
       # We want to ensure that the URL we request hits the same IP that we verified above,
       # so we replace the host with the IP address here and use this url to make the proxy request.
-      ip_url = URI.to_string(HttpUtils.replace_host(uri, resolved_ip))
-
       # Disallow CORS proxying unless request was made to the cors proxy url
       cors_proxy_url = Application.get_env(:ret, RetWeb.Endpoint)[:cors_proxy_url]
 
@@ -710,7 +715,7 @@ defmodule RetWeb.PageController do
             # internally, which expects a charlist.
             client_options: [
               ssl: [{:server_name_indication, to_charlist(authority)}, {:versions, [:"tlsv1.2",:"tlsv1.3"]}]
-            ],
+            ]
             # preserve_host_header: true
           )
 
