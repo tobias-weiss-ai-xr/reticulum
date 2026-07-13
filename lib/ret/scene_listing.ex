@@ -62,7 +62,7 @@ defmodule Ret.SceneListing do
     |> put_change(:attributions, scene.attributions)
     |> put_change(:model_owned_file_id, scene.model_owned_file.owned_file_id)
     |> put_change(:screenshot_owned_file_id, scene.screenshot_owned_file.owned_file_id)
-    |> put_change(:scene_owned_file_id, scene.scene_owned_file.owned_file_id)
+    |> put_change(:scene_owned_file_id, scene.scene_owned_file && scene.scene_owned_file.owned_file_id)
     |> SceneListingSlug.maybe_generate_slug()
   end
 

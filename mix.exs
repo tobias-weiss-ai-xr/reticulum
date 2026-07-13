@@ -58,7 +58,7 @@ defmodule Ret.Mixfile do
       {:cors_plug, "~> 2.0"},
       {:statix, "~> 1.2"},
       {:quantum, "~> 2.2.7"},
-      {:credo, "~> 1.1", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:mox, "~> 1.0.1", only: [:dev, :test]},
       {:plug_attack, "~> 0.4"},
       {:ecto_enum, "~> 1.3"},
@@ -90,7 +90,9 @@ defmodule Ret.Mixfile do
       {:ex_json_schema, "~> 0.7.3"},
       {:observer_cli, "~> 1.5"},
       {:stream_data, "~> 0.5",
-       github: "whatyouhide/stream_data", ref: "c7ef8ef", only: [:dev, :test]}
+       github: "whatyouhide/stream_data", ref: "c7ef8ef", only: [:dev, :test]},
+      {:telemetry_metrics_prometheus, "~> 1.1"},
+      {:telemetry_metrics, "~> 0.6"}
     ]
   end
 

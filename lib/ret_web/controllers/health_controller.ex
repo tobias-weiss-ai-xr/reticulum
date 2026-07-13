@@ -3,20 +3,55 @@ defmodule RetWeb.HealthController do
   import Ecto.Query
 
   def index(conn, _params) do
-    # Check database
+    results = %{
+      db: check_db(),
+      cache_hubs_index: check_page_cache({:hubs, "index.html"}),
+      cache_hubs_hub: check_page_cache({:hubs, "hub.html"}),
+      cache_spoke_index: check_page_cache({:spoke, "index.html"}),
+      room_routing: check_room_routing()
+    }
+
+    all_healthy = results |> Map.values() |> Enum.all?(& &1)
+
+    conn
+    |> put_status(if(all_healthy, do: 200, else: 503))
+    |> json(%{healthy: all_healthy, checks: results})
+  end
+
+  defp check_db do
     if module_config(:check_repo) do
-      Ret.Repo.all(from Ret.Hub, limit: 0)
+      case Ret.Repo.all(from Ret.Hub, limit: 0) do
+        [_ | _] -> true
+        [] -> true
+        _ -> false
+      end
+    else
+      true
     end
+  rescue
+    _ -> false
+  end
 
-    # Check page cache
-    true = (Cachex.get(:page_chunks, {:hubs, "index.html"}) |> elem(1) || []) |> Enum.count() > 0
-    true = (Cachex.get(:page_chunks, {:hubs, "hub.html"}) |> elem(1) || []) |> Enum.count() > 0
-    true = (Cachex.get(:page_chunks, {:spoke, "index.html"}) |> elem(1) || []) |> Enum.count() > 0
+  defp check_page_cache(key) do
+    case Cachex.get(:page_chunks, key) do
+      {:ok, value} ->
+        cond do
+          is_list(value) -> length(value) > 0
+          is_map(value) and value != %{} -> true
+          true -> false
+        end
 
-    # Check room routing
-    true = Ret.RoomAssigner.get_available_host("") != nil
+      _ ->
+        false
+    end
+  rescue
+    _ -> false
+  end
 
-    send_resp(conn, 200, "ok")
+  defp check_room_routing do
+    Ret.RoomAssigner.get_available_host("") != nil
+  rescue
+    _ -> false
   end
 
   defp module_config(key) do

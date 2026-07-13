@@ -843,7 +843,7 @@ defmodule Ret.MediaSearch do
       attributions: s.attributions,
       project_id: s.project |> Project.to_sid(),
       images: %{
-        preview: %{url: s.screenshot_owned_file |> OwnedFile.uri_for() |> URI.to_string()}
+        preview: %{url: OwnedFile.url_or_nil_for(s.screenshot_owned_file) || "#{RetWeb.Endpoint.url()}/scene_screenshot_unavailable.png"}
       }
     }
   end
@@ -860,7 +860,7 @@ defmodule Ret.MediaSearch do
       attributions: avatar.attributions,
       images: %{
         preview: %{
-          url: thumbnail || "https://asset-bundles-prod.reticulum.io/bots/avatar_unavailable.png",
+          url: thumbnail || "#{RetWeb.Endpoint.url()}/avatar_unavailable.png",
           width: 720,
           height: 1280
         }
@@ -885,7 +885,7 @@ defmodule Ret.MediaSearch do
       allow_remixing: avatar_listing.avatar !== nil and avatar_listing.avatar.allow_remixing,
       images: %{
         preview: %{
-          url: thumbnail || "https://asset-bundles-prod.reticulum.io/bots/avatar_unavailable.png",
+          url: thumbnail || "#{RetWeb.Endpoint.url()}/avatar_unavailable.png",
           width: 720,
           height: 1280
         }

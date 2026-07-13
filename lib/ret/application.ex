@@ -65,6 +65,7 @@ defmodule Ret.Application do
     {:ok, _} = Logger.add_backend(Sentry.LoggerBackend)
 
     children = [
+      {TelemetryMetricsPrometheus.Core, [metrics: RetWeb.Telemetry.metrics()]},
       {Phoenix.PubSub, [name: Ret.PubSub, adapter: Phoenix.PubSub.PG2, pool_size: 4]},
       Ret.Repo,
       RetWeb.Endpoint,

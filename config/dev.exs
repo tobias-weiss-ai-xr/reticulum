@@ -23,6 +23,7 @@ host = System.get_env("HUBS_HOST") || "hubs.local"
 config :ret, RetWeb.Endpoint,
   url: [scheme: "https", host: host, port: 443],
   static_url: [scheme: "https", host: host, port: 443],
+  http: [port: 4001, otp_app: :ret],
   https: [
     port: 4000,
     otp_app: :ret,
@@ -40,9 +41,8 @@ config :ret, RetWeb.Endpoint,
   debug_errors: true,
   code_reloader: true,
   check_origin: false,
-  # This config value is for local development only.
-  secret_key_base: "txlMOtlaY5x3crvOCko4uV5PM29ul3zGo1oBGNO3cDXx+7GHLKqt0gR9qzgThxb5",
-  allowed_origins: "*",
+  secret_key_base: System.get_env("SECRET_KEY_BASE") || "txlMOtlaY5x3crvOCko4uV5PM29ul3zGo1oBGNO3cDXx+7GHLKqt0gR9qzgThxb5",
+  allowed_origins: System.get_env("ALLOWED_ORIGINS") || "*",
   allow_crawlers: true
 
 # ## SSL Support
@@ -97,7 +97,7 @@ config :ret, Ret.SessionLockRepo,
 
 config :ret, RetWeb.Plugs.HeaderAuthorization,
   header_name: "x-ret-admin-access-key",
-  header_value: "admin-only"
+  header_value: System.get_env("RETICULUM_ADMIN_KEY") || "admin-only"
 
 config :ret, Ret.SlackClient,
   client_id: "",
@@ -118,11 +118,10 @@ config :ret, RetWeb.Api.V1.WhatsNewController, token: ""
 config :ret, RetWeb.Plugs.DashboardHeaderAuthorization, dashboard_access_key: ""
 
 # Allow any origin for API access in dev
-config :cors_plug, origin: ["*"]
+config :cors_plug, origin: System.get_env("CORS_ORIGINS", "*") |> String.split(",")
 
 config :ret,
-  # This config value is for local development only.
-  upload_encryption_key: "a8dedeb57adafa7821027d546f016efef5a501bd",
+  upload_encryption_key: System.get_env("UPLOAD_ENCRYPTION_KEY") || "a8dedeb57adafa7821027d546f016efef5a501bd",
   bot_access_key: ""
 
 config :ret, Ret.PageOriginWarmer, insecure_ssl: true
@@ -138,34 +137,34 @@ config :ret, Ret.MediaResolver,
   youtube_api_key: nil,
   sketchfab_api_key: nil,
   ytdl_host: nil,
-  photomnemonic_endpoint: "https://uvnsm9nzhe.execute-api.us-west-1.amazonaws.com/public"
+  photomnemonic_endpoint: nil
 
 config :ret, Ret.Speelycaptor,
-  speelycaptor_endpoint: "https://1dhaogh2hd.execute-api.us-west-1.amazonaws.com/public"
+  speelycaptor_endpoint: nil
 
 config :ret, Ret.Storage,
-  host: "https://#{host}:4000",
+  host: "https://#{host}",
   storage_path: "storage/dev",
   ttl: 60 * 60 * 24
 
 asset_hosts =
   "https://localhost:4000 https://localhost:8080 " <>
-    "https://#{host}:4000 https://#{host}:8080 https://#{host}:3000 https://#{host}:8989 https://#{host}:9090 https://#{cors_proxy_host}:4000 " <>
-    "https://assets-prod.reticulum.io https://asset-bundles-dev.reticulum.io https://asset-bundles-prod.reticulum.io"
+    "https://#{host}:4000 https://#{host}:8080 https://#{host}:3000 https://#{host}:8989 https://#{host}:9090 https://#{cors_proxy_host}:4000"
 
 websocket_hosts =
   "https://localhost:4000 https://localhost:8080 wss://localhost:4000 " <>
     "https://#{host}:4000 https://#{host}:8080 wss://#{host}:4000 wss://#{host}:8080 wss://#{host}:8989 wss://#{host}:9090 " <>
     "wss://#{host}:4000 wss://#{host}:8080 https://#{host}:8080 https://hubs.local:8080 wss://hubs.local:8080"
 
-pse_origin = "https://pse.chemie-lernen.org"
+pse_origin = ""
 
+# TEMP: 'unsafe-inline' needed because append_csp has a bug that doesn't properly add script hashes
 config :ret, RetWeb.Plugs.AddCSP,
-  script_src: asset_hosts,
+  script_src: "'unsafe-inline' #{asset_hosts}",
   font_src: asset_hosts,
   style_src: asset_hosts,
   connect_src:
-    "https://#{host}:8080 https://sentry.prod.mozaws.net #{asset_hosts} #{websocket_hosts} https://www.mozilla.org #{pse_origin}",
+    "https://#{host}:8080 #{asset_hosts} #{websocket_hosts} #{pse_origin}",
   img_src: "#{asset_hosts} #{pse_origin}",
   media_src: "#{asset_hosts} #{pse_origin}",
   manifest_src: asset_hosts,
@@ -198,16 +197,13 @@ config :ret, Ret.OAuthToken, oauth_token_key: ""
 
 config :ret, Ret.Guardian,
   issuer: "ret",
-  # This config value is for local development only.
-  secret_key: "47iqPEdWcfE7xRnyaxKDLt9OGEtkQG3SycHBEMOuT2qARmoESnhc76IgCUjaQIwX",
+  secret_key: System.get_env("GUARDIAN_SECRET_KEY") || "47iqPEdWcfE7xRnyaxKDLt9OGEtkQG3SycHBEMOuT2qARmoESnhc76IgCUjaQIwX",
   ttl: {12, :weeks}
 
 config :web_push_encryption, :vapid_details,
-  subject: "mailto:admin@mozilla.com",
-  public_key:
-    "BAb03820kHYuqIvtP6QuCKZRshvv_zp5eDtqkuwCUAxASBZMQbFZXzv8kjYOuLGF16A3k8qYnIN10_4asB-Aw7w",
-  # This config value is for local development only.
-  private_key: "w76tXh1d3RBdVQ5eINevXRwW6Ow6uRcBa8tBDOXfmxM"
+  subject: System.get_env("VAPID_SUBJECT") || "mailto:admin@example.com",
+  public_key: System.get_env("VAPID_PUBLIC_KEY") || "BAb03820kHYuqIvtP6QuCKZRshvv_zp5eDtqkuwCUAxASBZMQbFZXzv8kjYOuLGF16A3k8qYnIN10_4asB-Aw7w",
+  private_key: System.get_env("VAPID_PRIVATE_KEY") || "w76tXh1d3RBdVQ5eINevXRwW6Ow6uRcBa8tBDOXfmxM"
 
 config :sentry,
   environment_name: :dev,
@@ -239,6 +235,6 @@ config :ret, :dialog,
   cert_fullchain_path: "/etc/ssl/fullchain.pem",
   cert_privkey_path: "/etc/ssl/privkey.pem"
 
-config :ret, Ret.Repo.Migrations.AdminSchemaInit, postgrest_password: "password"
+config :ret, Ret.Repo.Migrations.AdminSchemaInit, postgrest_password: System.get_env("POSTGREST_PASSWORD") || "password"
 config :ret, Ret.StatsJob, node_stats_enabled: false, node_gauges_enabled: false
 config :ret, Ret.Coturn, realm: "ret"

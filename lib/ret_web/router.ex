@@ -98,6 +98,10 @@ defmodule RetWeb.Router do
     get "/", HealthController, :index
   end
 
+  scope "/" do
+    get "/metrics", RetWeb.PrometheusMetricsPlug, []
+  end
+
   scope "/api/postgrest" do
     pipe_through [:secure_headers, :auth_required, :admin_required, :proxy_api]
 
@@ -165,7 +169,9 @@ defmodule RetWeb.Router do
     end
 
     scope "/v1", as: :api_v1 do
-      pipe_through [:auth_required, :room_access]
+      pipe_through [:room_access]
+
+      post "/rooms/:room_id/join", Api.V1.RoomAccessController, :join
     end
 
     scope "/v1", as: :api_v1 do
@@ -173,6 +179,7 @@ defmodule RetWeb.Router do
 
       resources "/scenes", Api.V1.SceneController, only: [:create, :update]
       post "/rooms/token", Api.V1.RoomAccessController, :create
+      post "/rooms/classroom", Api.V1.RoomAccessController, :create_classroom
 
       resources "/avatars", Api.V1.AvatarController, only: [:create, :update, :delete]
       resources "/hubs", Api.V1.HubController, only: [:update]

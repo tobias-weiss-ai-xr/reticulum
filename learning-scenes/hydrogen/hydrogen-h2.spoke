@@ -1,0 +1,293 @@
+{
+  "version": 8,
+  "root": "SCENE-ROOT-0000-0000-0000-000000000001",
+  "metadata": {
+    "name": "Wasserstoff - H₂ Lernszene",
+    "allowRemixing": true,
+    "allowPromotion": true,
+    "previewCameraTransform": {
+      "elements": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1.5, 4, 1]
+    }
+  },
+  "entities": {
+    "SCENE-ROOT-0000-0000-0000-000000000001": {
+      "name": "Wasserstoff - H₂ Lernszene",
+      "components": [
+        {
+          "name": "fog",
+          "props": { "type": "linear", "color": "#1a1a2e", "near": 10, "far": 100 }
+        },
+        {
+          "name": "background",
+          "props": { "color": "#0f0f23" }
+        },
+        {
+          "name": "audio-settings",
+          "props": {
+            "overrideAudioSettings": true,
+            "avatarDistanceModel": "inverse",
+            "avatarRolloffFactor": 2,
+            "avatarRefDistance": 1,
+            "avatarMaxDistance": 10000,
+            "mediaVolume": 0.5,
+            "mediaDistanceModel": "inverse",
+            "mediaRolloffFactor": 1,
+            "mediaRefDistance": 1,
+            "mediaMaxDistance": 10000,
+            "mediaConeInnerAngle": 180,
+            "mediaConeOuterAngle": 0,
+            "mediaConeOuterGain": 0
+          }
+        },
+        {
+          "name": "editor-settings",
+          "props": { "enabled": true }
+        }
+      ]
+    },
+
+    "SKYBOX-000000-0000-0000-000000000001": {
+      "name": "Skybox",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "skybox", "props": { "turbidity": 2, "rayleigh": 0.5, "luminance": 0.8, "mieCoefficient": 0.02, "mieDirectionalG": 0.9, "inclination": 0.3, "azimuth": 0.5, "distance": 8000 } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 0
+    },
+
+    "DIRECTIONAL-LIGHT-0000-0000-000000000001": {
+      "name": "Main Light",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": -2, "y": 5, "z": 3 }, "rotation": { "x": 0.9, "y": -0.3, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "directional-light", "props": { "color": "#ffffff", "intensity": 3, "castShadow": true, "shadowMapResolution": [2048, 2048], "shadowBias": -0.0001, "shadowRadius": 2 } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 1
+    },
+
+    "POINT-LIGHT-0000-00000000001": {
+      "name": "Accent Light",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 2, "y": 2, "z": -2 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "point-light", "props": { "color": "#4fc3f7", "intensity": 0.5, "range": 20, "castShadow": false, "shadowMapResolution": [512, 512], "shadowBias": 0, "shadowRadius": 1 } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 2
+    },
+
+    "HEMISPHERE-LIGHT-0000-00000000001": {
+      "name": "Hemisphere Light",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "hemisphere-light", "props": { "skyColor": "#b3e5fc", "groundColor": "#1a237e", "intensity": 0.8 } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 3
+    },
+
+    "SPAWN-POINT-0000-000000000001": {
+      "name": "Spawn Point",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 0, "z": 4 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "spawn-point", "props": {} }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 4
+    },
+
+    "GROUND-PLANE-0000-000000000001": {
+      "name": "Ground Plane",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 0, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "ground-plane", "props": { "color": "#1a1a2e" } },
+        { "name": "shadow", "props": { "receive": true } },
+        { "name": "walkable", "props": {} }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 5
+    },
+
+    "FLOOR-PLAN-0000-000000000001": {
+      "name": "Floor Plan",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 0.01, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "floor-plan", "props": { "autoCellSize": true, "cellSize": 0.1, "cellHeight": 0.1, "agentHeight": 1.7, "agentRadius": 0.2, "agentMaxClimb": 0.5, "agentMaxSlope": 45, "regionMinSize": 2, "maxTriangles": 500, "forceTrimesh": false } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 6
+    },
+
+    "H2-MODEL-0000-000000000001": {
+      "name": "H₂ Molekül",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 1.6, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 3, "y": 3, "z": 3 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "gltf-model", "props": { "src": "./hydrogen/h2.glb", "attribution": null } },
+        { "name": "shadow", "props": { "cast": true, "receive": false } },
+        { "name": "collidable", "props": {} }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 7
+    },
+
+    "TEXT-TITLE-0000-00000000001": {
+      "name": "Titel",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 3.0, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Wasserstoff\nH₂", "anchorX": "center", "anchorY": "middle", "color": "#ffffff", "fontSize": 0.35, "fillOpacity": 1, "textAlign": "center", "letterSpacing": 0.05, "lineHeight": 1.2 } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 8
+    },
+
+    "TEXT-SUBTITLE-000-00000000001": {
+      "name": "Untertitel",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 2.5, "z": 0 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Das leichteste Element im Universum", "anchorX": "center", "anchorY": "middle", "color": "#4fc3f7", "fontSize": 0.15, "fillOpacity": 1, "textAlign": "center", "letterSpacing": 0.02 } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 9
+    },
+
+    "TEXT-PROP-Z-000000-00000000001": {
+      "name": "Ordnungszahl",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": -3, "y": 2.0, "z": -1 }, "rotation": { "x": 0, "y": 0.5, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Ordnungszahl\n1", "anchorX": "center", "anchorY": "middle", "color": "#81d4fa", "fontSize": 0.12, "fillOpacity": 1, "textAlign": "center" } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 10
+    },
+
+    "TEXT-PROP-MASS-00000000000001": {
+      "name": "Atommasse",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": -3, "y": 1.6, "z": -1 }, "rotation": { "x": 0, "y": 0.5, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Atommasse\n1,008 u", "anchorX": "center", "anchorY": "middle", "color": "#81d4fa", "fontSize": 0.12, "fillOpacity": 1, "textAlign": "center" } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 11
+    },
+
+    "TEXT-PROP-CONF-00000000000001": {
+      "name": "Elektronenkonfiguration",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": -3, "y": 1.2, "z": -1 }, "rotation": { "x": 0, "y": 0.5, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Elektronen-\nkonfiguration\n1s¹", "anchorX": "center", "anchorY": "middle", "color": "#81d4fa", "fontSize": 0.12, "fillOpacity": 1, "textAlign": "center" } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 12
+    },
+
+    "TEXT-PROP-STATE-0000000000001": {
+      "name": "Aggregatzustand",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 3, "y": 2.0, "z": -1 }, "rotation": { "x": 0, "y": -0.5, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Aggregatzustand\nGas", "anchorX": "center", "anchorY": "middle", "color": "#ffab91", "fontSize": 0.12, "fillOpacity": 1, "textAlign": "center" } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 13
+    },
+
+    "TEXT-PROP-MP-000000000000001": {
+      "name": "Schmelzpunkt",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 3, "y": 1.6, "z": -1 }, "rotation": { "x": 0, "y": -0.5, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Schmelzpunkt\n-259,16 °C", "anchorX": "center", "anchorY": "middle", "color": "#ffab91", "fontSize": 0.12, "fillOpacity": 1, "textAlign": "center" } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 14
+    },
+
+    "TEXT-PROP-BP-000000000000001": {
+      "name": "Siedepunkt",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 3, "y": 1.2, "z": -1 }, "rotation": { "x": 0, "y": -0.5, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Siedepunkt\n-252,87 °C", "anchorX": "center", "anchorY": "middle", "color": "#ffab91", "fontSize": 0.12, "fillOpacity": 1, "textAlign": "center" } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 15
+    },
+
+    "TEXT-PROP-DENSITY-0000000001": {
+      "name": "Dichte",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": -3, "y": 0.8, "z": -1 }, "rotation": { "x": 0, "y": 0.5, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Dichte\n0,00009 g/cm³", "anchorX": "center", "anchorY": "middle", "color": "#81d4fa", "fontSize": 0.12, "fillOpacity": 1, "textAlign": "center" } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 16
+    },
+
+    "TEXT-PROP-GROUP-00000000001": {
+      "name": "Gruppe",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 3, "y": 0.8, "z": -1 }, "rotation": { "x": 0, "y": -0.5, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "text", "props": { "text": "Gruppe / Periode\n1 / 1", "anchorX": "center", "anchorY": "middle", "color": "#ffab91", "fontSize": 0.12, "fillOpacity": 1, "textAlign": "center" } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 17
+    },
+
+    "WAYPOINT-0000-000000000001": {
+      "name": "Waypoint Near",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 0, "z": 2 }, "rotation": { "x": 0, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "waypoint", "props": { "canBeSpawnPoint": true, "canBeOccupied": true, "canBeClicked": false, "willDisableMotion": false, "willDisableTeleporting": false, "snapToNavMesh": true, "willMaintainInitialOrientation": false } }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 18
+    },
+
+    "SCENE-PREVIEW-CAM-00000000001": {
+      "name": "Scene Preview Camera",
+      "components": [
+        { "name": "transform", "props": { "position": { "x": 0, "y": 2.5, "z": 5 }, "rotation": { "x": -0.3, "y": 0, "z": 0 }, "scale": { "x": 1, "y": 1, "z": 1 } } },
+        { "name": "visible", "props": { "visible": true } },
+        { "name": "editor-settings", "props": { "enabled": true } },
+        { "name": "scene-preview-camera", "props": {} }
+      ],
+      "parent": "SCENE-ROOT-0000-0000-0000-000000000001",
+      "index": 19
+    }
+  }
+}
