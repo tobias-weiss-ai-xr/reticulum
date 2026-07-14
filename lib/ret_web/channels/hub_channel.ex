@@ -281,6 +281,116 @@ defmodule RetWeb.HubChannel do
   def handle_in("events:lower_hand", _payload, socket),
     do: socket |> set_presence_flag(:hand_raised, false)
 
+  def handle_in("classroom:navigate_element", %{"element" => element} = payload, socket) do
+    account = Guardian.Phoenix.Socket.current_resource(socket)
+    hub = socket |> hub_for_socket
+
+    if account && account |> can?(update_hub(hub)) do
+      # Persist current element to hub user_data for late joiners
+      if element != nil and element != "" do
+        updated_user_data =
+          (hub.user_data || %{})
+          |> Map.put("chemistry", %{"symbol" => element})
+
+        hub
+        |> Ecto.Changeset.change(%{user_data: updated_user_data})
+        |> Repo.update()
+        |> case do
+          {:ok, _} -> :ok
+          {:error, _} -> :ok
+        end
+      end
+
+      broadcast!(socket, "classroom:navigate_element", %{
+        element: element,
+        from_element: payload["from_element"],
+        transition_ms: payload["transition_ms"] || 500,
+        session_id: socket.assigns.session_id
+      })
+    end
+
+    {:noreply, socket}
+  end
+
+  def handle_in("classroom:get_current_element", _payload, socket) do
+    hub = socket |> hub_for_socket
+
+    current_element =
+      case hub.user_data do
+        %{"chemistry" => %{"symbol" => symbol}} when is_binary(symbol) and symbol != "" -> symbol
+        _ -> nil
+      end
+
+    {:reply, :ok, %{element: current_element}, socket}
+  end
+
+  def handle_in("classroom:create_annotation", %{"element" => element, "text" => text} = _payload, socket) do
+    hub = socket |> hub_for_socket
+    account = Guardian.Phoenix.Socket.current_resource(socket)
+
+    if account && account |> can?(update_hub(hub)) do
+      annotation = %{
+        "id" => Ecto.UUID.generate(),
+        "element" => element,
+        "text" => text,
+        "author_session_id" => socket.assigns.session_id,
+        "author_name" => account.profile && account.profile.display_name || "Teacher",
+        "created_at" => DateTime.utc_now() |> DateTime.to_iso8601()
+      }
+
+      updated_user_data =
+        (hub.user_data || %{})
+        |> Map.put("annotations",
+          (Map.get(hub.user_data || %{}, "annotations") || []) ++ [annotation]
+        )
+
+      hub
+      |> Ecto.Changeset.change(%{user_data: updated_user_data})
+      |> Repo.update()
+      |> case do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
+      end
+
+      broadcast!(socket, "classroom:annotation_created", annotation)
+      {:reply, :ok, annotation, socket}
+    else
+      {:reply, :error, %{error: "Only teachers can create annotations"}, socket}
+    end
+  end
+
+  def handle_in("classroom:remove_annotation", %{"id" => id} = _payload, socket) do
+    hub = socket |> hub_for_socket
+    account = Guardian.Phoenix.Socket.current_resource(socket)
+
+    if account && account |> can?(update_hub(hub)) do
+      annotations =
+        (Map.get(hub.user_data || %{}, "annotations") || [])
+        |> Enum.reject(fn a -> a["id"] == id end)
+
+      updated_user_data = (hub.user_data || %{}) |> Map.put("annotations", annotations)
+
+      hub
+      |> Ecto.Changeset.change(%{user_data: updated_user_data})
+      |> Repo.update()
+      |> case do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
+      end
+
+      broadcast!(socket, "classroom:annotation_removed", %{id: id})
+      {:reply, :ok, %{}, socket}
+    else
+      {:reply, :error, %{error: "Only teachers can remove annotations"}, socket}
+    end
+  end
+
+  def handle_in("classroom:list_annotations", _payload, socket) do
+    hub = socket |> hub_for_socket
+    annotations = Map.get(hub.user_data || %{}, "annotations") || []
+    {:reply, :ok, %{annotations: annotations}, socket}
+  end
+
   def handle_in("events:begin_streaming", _payload, socket),
     do: socket |> set_presence_flag(:streaming, true)
 
