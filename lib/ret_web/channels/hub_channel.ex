@@ -427,6 +427,121 @@ defmodule RetWeb.HubChannel do
     {:reply, :ok, %{progress: progress}, socket}
   end
 
+  def handle_in("classroom:start_quiz", %{"question" => question, "options" => options, "correctIndex" => correct_index}, socket) do
+    hub = socket |> hub_for_socket
+    account = Guardian.Phoenix.Socket.current_resource(socket)
+
+    if account && account |> can?(update_hub(hub)) do
+      quiz_id = Ecto.UUID.generate()
+
+      quiz = %{
+        "id" => quiz_id,
+        "question" => question,
+        "options" => options,
+        "correctIndex" => correct_index,
+        "active" => true,
+        "created_at" => DateTime.utc_now() |> DateTime.to_iso8601()
+      }
+
+      updated_user_data =
+        (hub.user_data || %{})
+        |> Map.put("quizzes",
+          (Map.get(hub.user_data || %{}, "quizzes") || %{})
+          |> Map.put(quiz_id, quiz)
+        )
+
+      hub
+      |> Ecto.Changeset.change(%{user_data: updated_user_data})
+      |> Repo.update()
+      |> case do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
+      end
+
+      broadcast!(socket, "classroom:quiz_started", quiz)
+      {:reply, :ok, quiz, socket}
+    else
+      {:reply, :error, %{error: "Only teachers can start quizzes"}, socket}
+    end
+  end
+
+  def handle_in("classroom:submit_answer", %{"quiz_id" => quiz_id, "answer_index" => answer_index}, socket) do
+    hub = socket |> hub_for_socket
+    account = Guardian.Phoenix.Socket.current_resource(socket)
+
+    if !account || !(account |> can?(update_hub(hub))) do
+      session_id = socket.assigns.session_id
+      existing_answers = Map.get(hub.user_data || %{}, "answers", %{})
+      quiz_answers = Map.get(existing_answers, quiz_id, %{})
+      updated_quiz_answers = Map.put(quiz_answers, session_id, %{"answer_index" => answer_index})
+      updated_answers = Map.put(existing_answers, quiz_id, updated_quiz_answers)
+      updated_user_data = (hub.user_data || %{}) |> Map.put("answers", updated_answers)
+
+      hub
+      |> Ecto.Changeset.change(%{user_data: updated_user_data})
+      |> Repo.update()
+      |> case do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
+      end
+
+      broadcast!(socket, "classroom:answer_submitted", %{quiz_id: quiz_id})
+      {:reply, :ok, %{}, socket}
+    else
+      {:reply, :error, %{error: "Teachers cannot submit answers"}, socket}
+    end
+  end
+
+  def handle_in("classroom:get_quiz_results", %{"quiz_id" => quiz_id}, socket) do
+    hub = socket |> hub_for_socket
+
+    answers = Map.get(hub.user_data || %{}, "answers", %{}) |> Map.get(quiz_id, %{})
+
+    results =
+      answers
+      |> Map.values()
+      |> Enum.group_by(& &1["answer_index"])
+      |> Enum.map(fn {answer_index, entries} ->
+        %{
+          "answer_index" => answer_index,
+          "count" => length(entries),
+          "session_ids" => Enum.map(entries, fn _ -> nil end)
+        }
+      end)
+
+    {:reply, :ok, %{quiz_id: quiz_id, results: results}, socket}
+  end
+
+  def handle_in("classroom:end_quiz", %{"quiz_id" => quiz_id}, socket) do
+    hub = socket |> hub_for_socket
+    account = Guardian.Phoenix.Socket.current_resource(socket)
+
+    if account && account |> can?(update_hub(hub)) do
+      quizzes = Map.get(hub.user_data || %{}, "quizzes", %{})
+
+      updated_quizzes =
+        case Map.get(quizzes, quiz_id) do
+          nil -> quizzes
+          quiz -> quizzes |> Map.put(quiz_id, quiz |> Map.put("active", false))
+        end
+
+      updated_user_data = (hub.user_data || %{}) |> Map.put("quizzes", updated_quizzes)
+
+      hub
+      |> Ecto.Changeset.change(%{user_data: updated_user_data})
+      |> Repo.update()
+      |> case do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
+      end
+
+      broadcast!(socket, "classroom:quiz_ended", %{quiz_id: quiz_id})
+      {:reply, :ok, %{quiz_id: quiz_id}, socket}
+    else
+      {:reply, :error, %{error: "Only teachers can end quizzes"}, socket}
+    end
+  end
+
   def handle_in("events:begin_streaming", _payload, socket),
     do: socket |> set_presence_flag(:streaming, true)
 
