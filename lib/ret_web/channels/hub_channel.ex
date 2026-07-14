@@ -391,6 +391,42 @@ defmodule RetWeb.HubChannel do
     {:reply, :ok, %{annotations: annotations}, socket}
   end
 
+  def handle_in("classroom:track_progress", %{"element" => element, "status" => status}, socket) do
+    hub = socket |> hub_for_socket
+
+    if element != nil and element != "" and status in ~w(visited completed) do
+      existing = Map.get(hub.user_data || %{}, "progress") || %{}
+
+      updated = existing
+        |> Map.put(element, %{
+          "status" => status,
+          "session_id" => socket.assigns.session_id,
+          "updated_at" => DateTime.utc_now() |> DateTime.to_iso8601()
+        })
+
+      updated_user_data = (hub.user_data || %{}) |> Map.put("progress", updated)
+
+      hub
+      |> Ecto.Changeset.change(%{user_data: updated_user_data})
+      |> Repo.update()
+      |> case do
+        {:ok, _} -> :ok
+        {:error, _} -> :ok
+      end
+
+      broadcast!(socket, "classroom:progress_updated", %{element: element, status: status, progress: updated})
+      {:reply, :ok, %{element: element, status: status}, socket}
+    else
+      {:reply, :error, %{error: "Invalid element or status"}, socket}
+    end
+  end
+
+  def handle_in("classroom:get_progress", _payload, socket) do
+    hub = socket |> hub_for_socket
+    progress = Map.get(hub.user_data || %{}, "progress") || %{}
+    {:reply, :ok, %{progress: progress}, socket}
+  end
+
   def handle_in("events:begin_streaming", _payload, socket),
     do: socket |> set_presence_flag(:streaming, true)
 
