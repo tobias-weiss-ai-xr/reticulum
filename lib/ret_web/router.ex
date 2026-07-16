@@ -243,6 +243,11 @@ defmodule RetWeb.Router do
     scope "/v1", as: :api_v1 do
       resources "/media", Api.V1.MediaController, only: [:create]
     end
+
+    # Catch-all for unmatched /api/v1/* routes — returns empty paginated response
+    scope "/v1" do
+      get "/*path", Api.V1.HubController, :index_list
+    end
   end
 
   scope "/", RetWeb do
