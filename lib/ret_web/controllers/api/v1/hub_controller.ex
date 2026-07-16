@@ -119,7 +119,7 @@ defmodule RetWeb.Api.V1.HubController do
   # Catch-all for unmatched API v1 endpoints. Returns empty paginated response
   # so Hubs React frontend (usePaginatedAPI) doesn't crash on missing routes.
   def index_list(conn, _params) do
-    page_result = %{entries: [], next_cursor: nil, has_more: false, cursor: nil}
+    page_result = %{page_number: 1, page_size: 0, total_pages: 0, total_entries: 0, entries: []}
     render(conn, "index.json", hubs: [], page_result: page_result)
   end
 end
