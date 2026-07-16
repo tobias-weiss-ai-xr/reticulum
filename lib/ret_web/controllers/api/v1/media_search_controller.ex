@@ -66,12 +66,12 @@ defmodule RetWeb.Api.V1.MediaSearchController do
 
       conn |> render("index.json", results: results)
     else
-      conn |> send_resp(401, "You can only search #{source} by user for your own account.")
+      conn |> render("index.json", %{results: %Ret.MediaSearchResult{meta: %Ret.MediaSearchResultMeta{source: source, next_cursor: nil}, entries: [], suggestions: []}})
     end
   end
 
   def index(conn, %{"source" => source}) when source in ["favorites"] do
-    conn |> send_resp(401, "Missing account id for favorites search.")
+    conn |> render("index.json", %{results: %Ret.MediaSearchResult{meta: %Ret.MediaSearchResultMeta{source: source, next_cursor: nil}, entries: [], suggestions: []}})
   end
 
   def index(conn, %{"source" => source} = params)
@@ -111,7 +111,11 @@ defmodule RetWeb.Api.V1.MediaSearchController do
 
   defp cache_for_query(_query), do: :media_search_results
 
+  def index(conn, _params) do
+    conn |> render("index.json", %{results: %Ret.MediaSearchResult{meta: %Ret.MediaSearchResultMeta{source: :unknown, next_cursor: nil}, entries: [], suggestions: []}})
+  end
+
   def index(conn) do
-    conn |> send_resp(422, "")
+    conn |> render("index.json", %{results: %Ret.MediaSearchResult{meta: %Ret.MediaSearchResultMeta{source: :unknown, next_cursor: nil}, entries: [], suggestions: []}})
   end
 end
