@@ -35,6 +35,10 @@ defmodule RetWeb.Api.V1.HubView do
     }
   end
 
+  def render("empty.json", _assigns) do
+    %{entries: [], meta: %{next_cursor: nil}, suggestions: []}
+  end
+
   def render("create.json", %{hub: hub}) do
     %{
       status: :ok,
