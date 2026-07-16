@@ -247,6 +247,15 @@ defmodule RetWeb.PageController do
   def render_for_path("/whats-new/", _params, conn),
     do: conn |> render_page("whats-new.html", :hubs, "whats-new-meta.html")
 
+  def render_for_path("/privacy", _params, conn), do: conn |> render_docs_page("privacy.html")
+  def render_for_path("/privacy/", _params, conn), do: conn |> render_docs_page("privacy.html")
+
+  def render_for_path("/terms", _params, conn), do: conn |> render_docs_page("terms.html")
+  def render_for_path("/terms/", _params, conn), do: conn |> render_docs_page("terms.html")
+
+  def render_for_path("/help", _params, conn), do: conn |> render_docs_page("help.html")
+  def render_for_path("/help/", _params, conn), do: conn |> render_docs_page("help.html")
+
   def render_for_path("/hub.service.js", _params, conn),
     do: conn |> render_asset("hub.service.js", :hubs, "hub.service-meta.js")
 
@@ -760,10 +769,41 @@ defmodule RetWeb.PageController do
   end
 
   defp render_docs(conn) do
+    path = conn.request_path
+
+    path =
+      if !String.ends_with?(path, ".html") && !String.ends_with?(path, "/") do
+        path <> ".html"
+      else
+        path
+      end
+
+    conn =
+      if path != conn.request_path do
+        %{conn | request_path: path, path_info: String.split(path, "/") |> Enum.filter(&(&1 != ""))}
+      else
+        conn
+      end
+
     static_options =
       Plug.Static.init(at: "/docs", from: module_config(:docs_path), gzip: true, brotli: true)
 
-    Plug.Static.call(conn, static_options)
+    case Plug.Static.call(conn, static_options) do
+      %{state: :set} = conn -> conn
+      conn -> conn |> send_resp(404, "Document not found.")
+    end
+  end
+
+  defp render_docs_page(conn, page) do
+    case File.read(Path.join(module_config(:docs_path), page)) do
+      {:ok, content} ->
+        conn
+        |> put_resp_header("content-type", "text/html; charset=utf-8")
+        |> send_resp(200, content)
+
+      {:error, _} ->
+        conn |> send_resp(404, "Page not found.")
+    end
   end
 
   defp put_extra_response_headers_for_page(conn, key) do
