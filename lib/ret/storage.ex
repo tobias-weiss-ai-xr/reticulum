@@ -523,7 +523,18 @@ defmodule Ret.Storage do
   end
 
   defp decrypt_file_to_stream(source_path, _meta, key) do
-    Ret.Crypto.decrypt_file_to_stream(source_path, key |> Ret.Crypto.hash())
+    case Ret.Crypto.decrypt_file_to_stream(source_path, key |> Ret.Crypto.hash()) do
+      {:error, :invalid_key} ->
+        legacy_secret = Application.get_env(:ret, RetWeb.Endpoint)[:legacy_secret_key_base]
+        if legacy_secret && legacy_secret != Application.get_env(:ret, RetWeb.Endpoint)[:secret_key_base] do
+          Ret.Crypto.decrypt_file_to_stream(source_path, key |> Ret.Crypto.hash(legacy_secret))
+        else
+          {:error, :invalid_key}
+        end
+
+      result ->
+        result
+    end
   end
 
   defp encrypt_stream_to_file(source_stream, source_size, destination_path, key) do

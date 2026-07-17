@@ -78,7 +78,6 @@ defmodule Ret.Mixfile do
       {:sentry, "~> 7.0"},
       {:toml, "~> 0.5"},
       {:scrivener_ecto, "~> 2.0"},
-      {:ua_parser, "~> 1.5"},
       {:download, git: "https://github.com/gfodor/download.git", branch: "reticulum/master"},
       {:reverse_proxy_plug, "~> 2.1"},
       {:inet_cidr, "~> 1.0"},

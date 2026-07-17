@@ -8,9 +8,6 @@ defmodule RetWeb.Api.V1.HubController do
   # Limit to 1 TPS
   plug RetWeb.Plugs.RateLimit
 
-  # Only allow access to remove hubs with secret header
-  plug RetWeb.Plugs.HeaderAuthorization when action in [:delete]
-
   def create(conn, %{"hub" => _hub_params} = params) do
     hub_params = params["hub"]
     chemistry = get_in(hub_params, ["user_data", "chemistry"])
@@ -99,12 +96,26 @@ defmodule RetWeb.Api.V1.HubController do
     do: changeset |> Hub.add_new_scene_to_changeset(scene)
 
   def delete(conn, %{"id" => hub_sid}) do
-    Hub
-    |> Repo.get_by(hub_sid: hub_sid)
-    |> Hub.changeset_for_entry_mode(:deny)
-    |> Repo.update!()
+    hub = Repo.get_by(Hub, hub_sid: hub_sid)
+    account = Guardian.Plug.current_resource(conn)
 
-    conn |> send_resp(200, "OK")
+    cond do
+      is_nil(hub) ->
+        conn |> send_resp(404, "Hub not found")
+
+      conn.halted ->
+        conn
+
+      account && Hub.is_creator?(hub, account.account_id) ->
+        hub
+        |> Hub.changeset_for_entry_mode(:deny)
+        |> Repo.update!()
+
+        conn |> send_resp(200, "OK")
+
+      true ->
+        conn |> send_resp(403, "Forbidden")
+    end
   end
 
   def index_by_element(conn, %{"element_symbol" => element_symbol}) do

@@ -122,13 +122,11 @@ defmodule RetWeb.Api.V1.MediaController do
   defp query_for(conn, url, version, quality) do
     quality = quality || default_quality(conn)
 
-    ua =
+    ua_family =
       conn
-      |> Plug.Conn.get_req_header("user-agent")
-      |> List.first()
-      |> UAParser.parse()
+      |> Ret.ConnUtils.user_agent_family()
 
-    supports_webm = ua.family != "Safari" && ua.family != "Mobile Safari"
+    supports_webm = ua_family != "Safari" && ua_family != "Mobile Safari"
 
     %Ret.MediaResolverQuery{
       url: url,
@@ -139,13 +137,11 @@ defmodule RetWeb.Api.V1.MediaController do
   end
 
   defp default_quality(conn) do
-    ua =
+    ua_os =
       conn
-      |> Plug.Conn.get_req_header("user-agent")
-      |> List.first()
-      |> UAParser.parse()
+      |> Ret.ConnUtils.user_agent_os()
 
-    if ua.os.family == "Android" || ua.os.family == "iOS" do
+    if ua_os == "Android" || ua_os == "iOS" do
       :low
     else
       :high

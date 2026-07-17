@@ -53,6 +53,8 @@ defmodule RetWeb.PageController do
           "/docs/" -> conn |> redirect(to: "/docs/welcome.html")
           "/docs" <> _ -> render_docs(conn)
           "/thumbnail/" <> _ -> imgproxy_proxy(conn)
+          "/spoke/assets/" <> _ -> dev_asset_proxy(conn, :spoke)
+          "/assets/" <> _ -> dev_asset_proxy(conn, :hubs)
           "/http://" <> _ -> cors_proxy(conn)
           "/https://" <> _ -> cors_proxy(conn)
           _ -> render_for_path(conn.request_path, conn.query_params, conn)
@@ -267,15 +269,13 @@ defmodule RetWeb.PageController do
   def render_for_path("/hubs/schema.toml", _params, conn), do: conn |> render_asset("schema.toml")
 
   def render_for_path("/manifest.webmanifest", _params, conn) do
-    ua =
+    ua_family =
       conn
-      |> Conn.get_req_header("user-agent")
-      |> List.first()
-      |> UAParser.parse()
+      |> Ret.ConnUtils.user_agent_family()
 
     # For iOS, do not render the manifest since we don't want to trigger the PWA functionality,
     # since WebRTC doesn't work then.
-    supports_pwa = ua.family != "Safari" && ua.family != "Mobile Safari"
+    supports_pwa = ua_family != "Safari" && ua_family != "Mobile Safari"
 
     if supports_pwa do
       manifest =
@@ -754,6 +754,40 @@ defmodule RetWeb.PageController do
         conn |> send_resp(401, "Bad request.")
       end
     end
+  end
+
+  # Proxies asset requests to the local webpack-dev-server for development mode.
+  # /assets/*    -> hubs-client:8080 (BASE_ASSETS_PATH="/")
+  # /spoke/assets/* -> spoke:9090 (BASE_ASSETS_PATH="/spoke/")
+  defp dev_asset_proxy(conn, source) do
+    {page_origin, path} =
+      case source do
+        :hubs ->
+          origin = Application.get_env(:ret, Ret.PageOriginWarmer)[:hubs_page_origin] || "https://hubs-client:8080"
+          {origin, conn.request_path}
+        :spoke ->
+          origin = Application.get_env(:ret, Ret.PageOriginWarmer)[:spoke_page_origin] || "https://spoke:9090/spoke"
+          # page_origin already includes /spoke, strip /spoke from request path to avoid doubling
+          {origin, String.replace_prefix(conn.request_path, "/spoke", "")}
+      end
+
+    upstream = "#{page_origin}#{path}"
+
+    body = ReverseProxyPlug.read_body(conn)
+
+    opts =
+      ReverseProxyPlug.init(
+        upstream: upstream,
+        client_options: [hackney: [:insecure]],
+        timeout: 30_000,
+        recv_timeout: 30_000
+      )
+
+    %Conn{}
+    |> Map.merge(conn)
+    |> Map.put(:path_info, [])
+    |> ReverseProxyPlug.request(body, opts)
+    |> ReverseProxyPlug.response(conn, opts)
   end
 
   defp render_static_asset(conn) do

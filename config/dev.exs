@@ -42,6 +42,7 @@ config :ret, RetWeb.Endpoint,
   code_reloader: true,
   check_origin: false,
   secret_key_base: System.get_env("SECRET_KEY_BASE") || "txlMOtlaY5x3crvOCko4uV5PM29ul3zGo1oBGNO3cDXx+7GHLKqt0gR9qzgThxb5",
+  legacy_secret_key_base: System.get_env("LEGACY_SECRET_KEY_BASE") || "txlMOtlaY5x3crvOCko4uV5PM29ul3zGo1oBGNO3cDXx+7GHLKqt0gR9qzgThxb5",
   allowed_origins: System.get_env("ALLOWED_ORIGINS") || "*",
   allow_crawlers: true
 

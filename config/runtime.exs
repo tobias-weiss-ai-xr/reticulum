@@ -41,7 +41,7 @@ case config_env() do
     config :ret, Ret.PageOriginWarmer,
       admin_page_origin: "https://#{hubs_admin_internal_hostname}:8989",
       hubs_page_origin: "https://#{hubs_client_internal_hostname}:8080",
-      spoke_page_origin: "https://#{spoke_internal_hostname}:9090"
+      spoke_page_origin: "https://#{spoke_internal_hostname}:9090/spoke"
 
     config :ret, Ret.Repo, hostname: db_hostname
 
