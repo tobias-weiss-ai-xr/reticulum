@@ -149,13 +149,16 @@ defmodule RetWeb.Router do
       pipe_through [:auth_optional, :forbid_disabled_accounts]
 
       resources "/hubs", Api.V1.HubController, only: [:create, :delete]
+      post "/hubs/bulk_archive", Api.V1.HubController, :bulk_archive
+      post "/hubs/:id/copy", Api.V1.HubController, :copy
     end
 
     # Must be defined before :show for scenes
     scope "/v1", as: :api_v1 do
       pipe_through [:auth_required]
 
-      get "/scenes/projectless", Api.V1.SceneController, :index_projectless
+      resources "/scenes/projectless", Api.V1.SceneController, only: [:index_projectless]
+      get "/hubs/:id/analytics", Api.V1.HubController, :analytics
     end
 
     scope "/v1", as: :api_v1 do
