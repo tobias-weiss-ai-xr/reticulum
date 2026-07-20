@@ -4,7 +4,7 @@ defenum(Ret.Hub.EntryMode, :hub_entry_mode, [:allow, :invite, :deny], schema: "r
 defenum(Ret.HubInvite.State, :hub_invite_state, [:active, :revoked], schema: "ret0")
 defenum(Ret.HubBinding.Type, :hub_binding_type, [:discord, :slack], schema: "ret0")
 
-defenum(Ret.OAuthProvider.Source, :oauth_provider_source, [:discord, :slack, :twitter],
+defenum(Ret.OAuthProvider.Source, :oauth_provider_source, [:discord, :slack, :twitter, :google],
   schema: "ret0"
 )
 

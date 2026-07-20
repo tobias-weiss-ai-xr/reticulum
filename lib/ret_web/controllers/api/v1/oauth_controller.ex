@@ -4,6 +4,7 @@ defmodule RetWeb.Api.V1.OAuthController do
   alias Ret.{
     Account,
     DiscordClient,
+    GoogleClient,
     Hub,
     OAuthProvider,
     OAuthToken,
@@ -48,7 +49,7 @@ defmodule RetWeb.Api.V1.OAuthController do
     end
   end
 
-  def show(conn, %{"type" => type} = params) when type in ["discord", "slack"] do
+  def show(conn, %{"type" => type} = params) when type in ["discord", "slack", "google"] do
     handle_chat_oauth(params, conn)
   end
 
@@ -73,6 +74,7 @@ defmodule RetWeb.Api.V1.OAuthController do
       case source do
         :discord -> DiscordClient
         :slack -> SlackClient
+        :google -> GoogleClient
       end
 
     case OAuthToken.decode_and_verify(state) do
