@@ -162,6 +162,12 @@ defmodule RetWeb.Router do
       get "/hubs/:id/roster", Api.V1.HubController, :list_roster
       post "/hubs/:id/roster", Api.V1.HubController, :add_to_roster
       delete "/hubs/:id/roster/:account_id", Api.V1.HubController, :remove_from_roster
+      get "/hubs/:id/sessions", Api.V1.HubSessionController, :index
+      get "/hubs/:id/sessions/upcoming", Api.V1.HubSessionController, :upcoming
+      post "/hubs/:id/sessions", Api.V1.HubSessionController, :create
+      get "/hubs/:id/sessions/:session_id", Api.V1.HubSessionController, :show
+      put "/hubs/:id/sessions/:session_id", Api.V1.HubSessionController, :update
+      post "/hubs/:id/sessions/:session_id/cancel", Api.V1.HubSessionController, :cancel
     end
 
     scope "/v1", as: :api_v1 do
