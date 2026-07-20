@@ -161,6 +161,9 @@ defmodule RetWeb.Router do
       get "/hub_templates/user", Api.V1.HubTemplateController, :user_templates
       post "/hub_templates/:template_id/create_room", Api.V1.HubTemplateController, :create_from_template
 
+      resources "/hubs/:hub_id/roles", Api.V1.RbacController, only: [:index, :show, :create, :update, :delete]
+      get "/hubs/:hub_id/permissions/:account_id", Api.V1.RbacController, :permissions
+
       get "/scenes/projectless", Api.V1.SceneController, :index_projectless
       get "/hubs/:id/analytics", Api.V1.HubController, :analytics
       get "/hubs/:id/roster", Api.V1.HubController, :list_roster
