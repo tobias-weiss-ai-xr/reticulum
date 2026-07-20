@@ -1,9 +1,7 @@
 defmodule RetWeb.Api.V1.RbacController do
   use RetWeb, :controller
-  import RetWeb.ApiHelpers
 
   alias Ret.{HubRoleMembership, HubRole, Repo, Account}
-  alias RetWeb.Api.V1.RbacView
 
   action_fallback RetWeb.Api.V1.FallbackController
 

@@ -1,8 +1,9 @@
 defmodule Ret.HubRoleMembership do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
-  alias Ret.{HubRoleMembership, HubRole}
+  alias Ret.{HubRoleMembership, HubRole, Repo}
 
   @schema_prefix "ret0"
   @primary_key {:hub_role_membership_id, :id, autogenerate: true}
@@ -24,6 +25,13 @@ defmodule Ret.HubRoleMembership do
     |> unique_constraint([:hub_id, :account_id], name: :hub_role_memberships_hub_id_account_id_index)
   end
 
+  def changeset(%HubRoleMembership{} = membership, hub, account) do
+    membership
+    |> cast(%{hub_id: hub.hub_id, account_id: account.account_id, role: :owner}, [:role, :hub_id, :account_id])
+    |> validate_required([:role, :hub_id, :account_id])
+    |> unique_constraint([:hub_id, :account_id], name: :hub_role_memberships_hub_id_account_id_index)
+  end
+
   def create_membership(hub, account, role) do
     %HubRoleMembership{}
     |> changeset(%{hub_id: hub.hub_id, account_id: account.account_id, role: role})
@@ -42,13 +50,13 @@ defmodule Ret.HubRoleMembership do
 
   def get_membership(hub_id, account_id) do
     Repo.one(from m in HubRoleMembership,
-      where: m.hub_id == ^hub_id and m.account_id == ^account_id,
+      where: [hub_id: ^hub_id, account_id: ^account_id],
       preload: [:account, :hub])
   end
 
   def list_memberships(hub_id) do
     Repo.all(from m in HubRoleMembership,
-      where: m.hub_id == ^hub_id,
+      where: [hub_id: ^hub_id],
       order_by: [desc: m.inserted_at],
       preload: [:account])
   end

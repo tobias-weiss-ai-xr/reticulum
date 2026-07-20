@@ -46,4 +46,10 @@ defmodule Ret.GoogleClient do
     |> Map.get(:body)
     |> Poison.decode!()
   end
+
+  defp get_redirect_uri(), do: RetWeb.Endpoint.url() <> "/api/v1/oauth/google"
+
+  defp module_config(key) do
+    Application.get_env(:ret, __MODULE__)[key]
+  end
 end
