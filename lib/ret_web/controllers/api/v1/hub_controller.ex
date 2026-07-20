@@ -1,9 +1,10 @@
-defmodule RetWeb.Api.V1.HubController do
-  use RetWeb, :controller
+  defmodule RetWeb.Api.V1.HubController do
+    use RetWeb, :controller
 
-  alias Ret.{Hub, Scene, Repo}
+    alias Ret.{Hub, Scene, Repo, HubEnrollment, Account}
 
-  import Canada, only: [can?: 2]
+    import Canada, only: [can?: 2]
+    import Ecto.Query
 
   # Limit to 1 TPS
   plug RetWeb.Plugs.RateLimit
@@ -256,6 +257,108 @@ defmodule RetWeb.Api.V1.HubController do
               conn |> send_resp(500, "Failed to create copy")
           end
       end
+    end
+  end
+
+  def list_roster(conn, %{"id" => hub_sid}) do
+    account = Guardian.Plug.current_resource(conn)
+
+    case Hub |> Repo.get_by(hub_sid: hub_sid) do
+      nil ->
+        conn |> send_resp(404, "not found")
+
+      hub ->
+        if account |> can?(update_hub(hub)) do
+          enrollments = HubEnrollment.list_active_enrollments(hub)
+
+          roster =
+            enrollments
+            |> Enum.map(fn enrollment ->
+              %{
+                account_id: enrollment.account.account_id,
+                email: enrollment.account.email,
+                display_name: enrollment.account.display_name,
+                role: enrollment.role,
+                enrolled_at: enrollment.inserted_at
+              }
+            end)
+
+          conn
+          |> put_status(200)
+          |> json(%{
+            data: %{
+              hub_sid: hub.hub_sid,
+              roster: roster,
+              student_count: length(Enum.filter(roster, fn r -> r.role == "student" end)),
+              teacher_count: length(Enum.filter(roster, fn r -> r.role == "teacher" end))
+            }
+          })
+        else
+          conn |> send_resp(403, "forbidden")
+        end
+    end
+  end
+
+  def add_to_roster(conn, %{"id" => hub_sid, "account_id" => account_id} = params) do
+    account = Guardian.Plug.current_resource(conn)
+    role = Map.get(params, "role", "student")
+
+    with %Hub{} = hub <- Hub |> Repo.get_by(hub_sid: hub_sid),
+         true <- account |> can?(update_hub(hub)) |> Kernel.==(true),
+         %Account{} = target_account <- Account |> Repo.get_by(account_id: account_id) do
+      case HubEnrollment.enroll_account(hub, target_account, role) do
+        {:ok, _enrollment} ->
+          conn
+          |> put_status(201)
+          |> json(%{
+            data: %{
+              hub_sid: hub.hub_sid,
+              account_id: target_account.account_id,
+              email: target_account.email,
+              display_name: target_account.display_name,
+              role: role
+            }
+          })
+
+        {:error, _changeset} ->
+          conn |> send_resp(422, "Failed to enroll account")
+      end
+    else
+      nil ->
+        conn |> send_resp(404, "hub or account not found")
+
+      false ->
+        conn |> send_resp(403, "forbidden")
+    end
+  end
+
+  def remove_from_roster(conn, %{"id" => hub_sid, "account_id" => account_id}) do
+    account = Guardian.Plug.current_resource(conn)
+
+    with %Hub{} = hub <- Hub |> Repo.get_by(hub_sid: hub_sid),
+         true <- account |> can?(update_hub(hub)) |> Kernel.==(true),
+         %Account{} = target_account <- Account |> Repo.get_by(account_id: account_id) do
+      case HubEnrollment.unenroll_account(hub, target_account) do
+        {:ok, _enrollment} ->
+          conn
+          |> put_status(200)
+          |> json(%{
+            data: %{
+              hub_sid: hub.hub_sid,
+              account_id: target_account.account_id,
+              removed: true
+            }
+          })
+
+        {:error, :not_enrolled} ->
+          conn |> send_resp(404, "account not enrolled")
+      end
+    else
+      nil ->
+        conn |> send_resp(404, "hub or account not found")
+
+      false ->
+        conn |> send_resp(403, "forbidden")
     end
   end
 

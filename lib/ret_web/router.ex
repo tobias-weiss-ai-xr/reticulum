@@ -157,8 +157,11 @@ defmodule RetWeb.Router do
     scope "/v1", as: :api_v1 do
       pipe_through [:auth_required]
 
-      resources "/scenes/projectless", Api.V1.SceneController, only: [:index_projectless]
+      get "/scenes/projectless", Api.V1.SceneController, :index_projectless
       get "/hubs/:id/analytics", Api.V1.HubController, :analytics
+      get "/hubs/:id/roster", Api.V1.HubController, :list_roster
+      post "/hubs/:id/roster", Api.V1.HubController, :add_to_roster
+      delete "/hubs/:id/roster/:account_id", Api.V1.HubController, :remove_from_roster
     end
 
     scope "/v1", as: :api_v1 do
