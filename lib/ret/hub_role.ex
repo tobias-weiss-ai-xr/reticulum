@@ -5,6 +5,8 @@ defmodule Ret.HubRole do
   Defines standard roles and their associated permissions for educational use.
   """
 
+  import Bitwise
+
   @roles [:owner, :teacher, :student, :guest]
 
   @role_permissions %{
